@@ -2,12 +2,15 @@ package me.shadorc.shadbot.launcher;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.sun.management.OperatingSystemMXBean;
 
 public class Main {
 
-	private static final float REQUIRED_FREE_RAM = 4.5f;
+	private static final float GB_RAM_TO_START = 4.5f;
 
 	private static final float GB = 1024 * 1024 * 1024;
 	private static final OperatingSystemMXBean OS_BEAN =
@@ -29,31 +32,34 @@ public class Main {
 		System.out.println(String.format("Total physical memory size: %.2f GB", Main.getTotalRam()));
 		System.out.println(String.format("Free physical memory size: %.2f GB", Main.getFreeRam()));
 
-		//final ScheduledExecutorService scheduledThreadPool = Executors.newSingleThreadScheduledExecutor();
-		//scheduledThreadPool.scheduleAtFixedRate(Main::watchRam, 5, 5, TimeUnit.MINUTES);
+		final ScheduledExecutorService scheduledThreadPool = Executors.newSingleThreadScheduledExecutor();
+		scheduledThreadPool.scheduleAtFixedRate(Main::watchRam, 5, 5, TimeUnit.MINUTES);
 
+		Main.loop();
+	}
+
+	private static void loop() {
 		ExitCode exitCode;
 		do {
 			exitCode = Main.start();
 			System.out.println(String.format("Exit code: %s", exitCode.toString()));
 		} while(exitCode.equals(ExitCode.RESTART));
-
-		//scheduledThreadPool.shutdown();
 	}
 
 	private static ExitCode start() {
 		System.out.println("Starting...");
 
-		if(Main.getFreeRam() < REQUIRED_FREE_RAM) {
+		if(Main.getFreeRam() < GB_RAM_TO_START) {
 			System.err.println(String.format(
-					"Free physical memory insufficient to start the bot (minimum required: %.1f GB)", REQUIRED_FREE_RAM));
+					"Free physical memory insufficient to start the process (minimum required: %.1f GB)", GB_RAM_TO_START));
 			return ExitCode.FATAL_ERROR;
 		}
 
 		try {
-			final String xms = String.format("-Xms%dm", (int) (REQUIRED_FREE_RAM * 1000));
-			final String xmx = String.format("-Xmx%dm", (int) (Math.ceil(Main.getFreeRam() - 0.5f) * 1000d));
-			process = new ProcessBuilder("java", "-jar", xms, xmx, jarPath).inheritIO().start();
+			// Allocate as much memory as possible leaving 500 MB free
+			final int allocatedRam = (int) (Math.ceil(Main.getFreeRam() - 0.5f) * 1000d);
+			final String xmx = String.format("-Xmx%dm", allocatedRam);
+			process = new ProcessBuilder("java", "-jar", xmx, jarPath).inheritIO().start();
 
 			System.out.println(String.format("Process started (PID: %d) with: %s",
 					process.pid(), process.info().commandLine().orElse("")));
@@ -61,16 +67,15 @@ public class Main {
 			return ExitCode.valueOf(process.waitFor());
 
 		} catch (IOException | InterruptedException err) {
-			System.err.println(String.format("An error occurred while starting the process: ", err.getMessage()));
+			System.err.println(String.format("An error occurred while starting the process: %s", err.getMessage()));
 			err.printStackTrace();
 			return ExitCode.FATAL_ERROR;
 		}
 	}
 
-	/* TODO
 	private static void watchRam() {
-		System.out.println(String.format("RAM available: %d", Main.getFreeRam()));
-		if(Main.getFreeRam() < 0.5f) {
+		System.out.println(String.format("RAM available: %.1f GB", Main.getFreeRam()));
+		if(Main.getFreeRam() < 0.75f) {
 			System.err.println("The available RAM is too low, restarting process...");
 			process.destroy();
 			try {
@@ -78,13 +83,13 @@ public class Main {
 					System.err.println("The process has not been cleanly destroyed, killing the process forcibly...");
 					process.destroyForcibly();
 				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			} catch (InterruptedException err) {
+				System.err.println("An error occurred while waiting for the process to finish.");
+				err.printStackTrace();
 			}
-			Main.start();
+			Main.loop();
 		}
 	}
-	 */
 
 	private static float getFreeRam() {
 		return OS_BEAN.getFreePhysicalMemorySize() / GB;
@@ -93,4 +98,5 @@ public class Main {
 	private static float getTotalRam() {
 		return OS_BEAN.getTotalPhysicalMemorySize() / GB;
 	}
+
 }
