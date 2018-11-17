@@ -79,11 +79,11 @@ public class Launcher {
 	private static void watchRam() {
 		LOG.info(String.format("RAM available: %.1f GB", Launcher.getFreeRam()));
 		if(Launcher.getFreeRam() < 0.75f) {
-			LOG.error("The available RAM is too low, restarting process...");
+			LOG.warn("The available RAM is too low, restarting process...");
 			process.destroy();
 			try {
 				if(!process.waitFor(10, TimeUnit.SECONDS)) {
-					LOG.error("The process has not been cleanly destroyed, killing the process forcibly...");
+					LOG.warn("The process has not been cleanly destroyed, killing the process forcibly...");
 					process.destroyForcibly();
 				}
 			} catch (InterruptedException err) {
