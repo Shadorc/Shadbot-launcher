@@ -40,7 +40,7 @@
 							<transformers>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>me.shadorc.shadbot.launcher.Main</mainClass>
+									<mainClass>me.shadorc.shadbot.launcher.Launcher</mainClass>
 								</transformer>
 							</transformers>
 						</configuration>
