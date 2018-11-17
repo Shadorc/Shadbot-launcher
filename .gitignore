@@ -19,3 +19,6 @@ dependency-reduced-pom.xml
 
 # Windows thumbnail db
 Thumbs.db
+
+# Project files
+*.log
