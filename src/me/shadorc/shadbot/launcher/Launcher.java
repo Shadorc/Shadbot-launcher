@@ -89,6 +89,10 @@ public class Launcher {
 				LOG.error("An error occurred while waiting for the process to finish.", err);
 			}
 			Launcher.loop();
+		} 
+		// If available RAM is sufficient and the process is not started
+		else if(!process.isAlive()) {
+			Launcher.loop();
 		}
 	}
 
