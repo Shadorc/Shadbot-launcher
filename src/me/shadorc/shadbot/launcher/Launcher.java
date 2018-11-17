@@ -70,8 +70,7 @@ public class Launcher {
 			return ExitCode.valueOf(process.waitFor());
 
 		} catch (IOException | InterruptedException err) {
-			LOG.error(String.format("An error occurred while starting the process: %s", err.getMessage()));
-			err.printStackTrace();
+			LOG.error("An error occurred while starting the process.", err);
 			return ExitCode.FATAL_ERROR;
 		}
 	}
@@ -87,8 +86,7 @@ public class Launcher {
 					process.destroyForcibly();
 				}
 			} catch (InterruptedException err) {
-				LOG.error("An error occurred while waiting for the process to finish.");
-				err.printStackTrace();
+				LOG.error("An error occurred while waiting for the process to finish.", err);
 			}
 			Launcher.loop();
 		}
