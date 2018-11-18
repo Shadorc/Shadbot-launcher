@@ -2,6 +2,8 @@ package me.shadorc.shadbot.launcher;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -44,8 +46,14 @@ public class Launcher {
 	private static void loop() {
 		ExitCode exitCode;
 		do {
+			final long start = System.currentTimeMillis();
+
 			exitCode = Launcher.start();
 			LOG.info(String.format("Exit code: %s", exitCode.toString()));
+
+			final long elapsed = System.currentTimeMillis() - start;
+			final SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss.SSS");
+			LOG.info(String.format("Execution time: %s", formatter.format(new Date(elapsed))));
 		} while(exitCode.equals(ExitCode.RESTART));
 	}
 
