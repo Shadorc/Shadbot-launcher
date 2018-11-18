@@ -21,6 +21,7 @@ public class Launcher {
 			(com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
 
 	private static final float GB_RAM_TO_START = 4.5f;
+	private static final float GB_RAM_MIN = 0.5f;
 
 	private static String jarPath;
 	private static Process process;
@@ -85,7 +86,7 @@ public class Launcher {
 
 	private static void watchRam() {
 		LOG.info(String.format("RAM available: %.1f GB", Launcher.getFreeRam()));
-		if(Launcher.getFreeRam() < 0.75f) {
+		if(Launcher.getFreeRam() < GB_RAM_MIN) {
 			LOG.warn("The available RAM is too low, restarting process...");
 			process.destroy();
 			try {
