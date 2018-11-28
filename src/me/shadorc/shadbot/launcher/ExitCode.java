@@ -1,6 +1,7 @@
 package me.shadorc.shadbot.launcher;
 
 public enum ExitCode {
+	ALREADY_RUNNING(-2),
 	UNKNWON(-1),
 	NORMAL(0),
 	FATAL_ERROR(1),
