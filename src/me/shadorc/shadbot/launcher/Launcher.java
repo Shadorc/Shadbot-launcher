@@ -5,10 +5,10 @@ import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,17 +18,14 @@ import com.sun.management.OperatingSystemMXBean;
 public class Launcher {
 
 	private static final Logger LOG = LoggerFactory.getLogger(Launcher.class);
-	private static final SimpleDateFormat FORMATTER = new SimpleDateFormat("HH:mm:ss.SSS", Locale.FRENCH);
 	private static final float GB = 1024 * 1024 * 1024;
 	private static final OperatingSystemMXBean OS_BEAN =
 			(com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
 
-	private static final ScheduledExecutorService SCHEDULED_THREAD_POOL = Executors.newSingleThreadScheduledExecutor();
-	private static final ExecutorService FIXED_THREAD_POOL = Executors.newSingleThreadExecutor();
-
 	private static final float GB_RAM_TO_START = 4.5f;
 	private static final float GB_RAM_MIN = 0.5f;
 
+	private static AtomicBoolean shouldRestart = new AtomicBoolean();
 	private static String jarPath;
 	private static Process process;
 
@@ -44,34 +41,27 @@ public class Launcher {
 		LOG.info(String.format("Total physical memory size: %.2f GB", Launcher.getTotalRam()));
 		LOG.info(String.format("Free physical memory size: %.2f GB", Launcher.getFreeRam()));
 
-		SCHEDULED_THREAD_POOL.scheduleAtFixedRate(Launcher::watchRam, 5, 5, TimeUnit.MINUTES);
+		ScheduledExecutorService scheduledThreadPool = Executors.newSingleThreadScheduledExecutor();
+		scheduledThreadPool.scheduleAtFixedRate(Launcher::watchRam, 5, 5, TimeUnit.MINUTES);
 
-		Launcher.loop();
-	}
-
-	private static void loop() {
-		if(process.isAlive()) {
-			return;
-		}
-
-		FIXED_THREAD_POOL.execute(() -> {
-			ExitCode exitCode;
-			do {
-				exitCode = Launcher.start();
-				LOG.info(String.format("Exit code: %s", exitCode.toString()));
-			} while(exitCode.equals(ExitCode.RESTART));
-		});
+		ExitCode exitCode;
+		do {
+			shouldRestart.set(false);
+			exitCode = Launcher.start();
+			LOG.info(String.format("Exit code: %s", exitCode.toString()));
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException err) {
+				LOG.error("An error occurred while waiting.", err);
+			}
+		} while(exitCode.equals(ExitCode.RESTART) || shouldRestart.get());
 	}
 
 	private static ExitCode start() {
-		if(process.isAlive()) {
-			return ExitCode.ALREADY_RUNNING;
-		}
-
 		if(Launcher.getFreeRam() < GB_RAM_TO_START) {
 			LOG.error(String.format(
 					"Free physical memory insufficient to start the process (minimum required: %.1f GB)", GB_RAM_TO_START));
-			return ExitCode.FATAL_ERROR;
+			return ExitCode.RESTART;
 		}
 
 		LOG.info("Starting...");
@@ -89,9 +79,8 @@ public class Launcher {
 			final int exitCode = process.waitFor();
 
 			final long elapsed = System.currentTimeMillis() - start;
-			synchronized (FORMATTER) {
-				LOG.info(String.format("Execution time: %s", FORMATTER.format(new Date(elapsed))));
-			}
+			LOG.info(String.format("Execution time: %s", 
+					new SimpleDateFormat("HH:mm:ss.SSS", Locale.FRENCH).format(new Date(elapsed))));
 
 			return ExitCode.valueOf(exitCode);
 
@@ -113,11 +102,7 @@ public class Launcher {
 			} catch (InterruptedException err) {
 				LOG.error("An error occurred while waiting for the process to finish.", err);
 			}
-			Launcher.loop();
-		}
-		// If available RAM is sufficient and the process is not started
-		else if(!process.isAlive()) {
-			Launcher.loop();
+			shouldRestart.set(true);
 		}
 	}
 
