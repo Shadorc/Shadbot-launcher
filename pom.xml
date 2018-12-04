@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>me.shadorc.shadbot.launcher</groupId>
 	<artifactId>shadbot-launcher</artifactId>
-	<version>1.0.3</version>
+	<version>1.0.4</version>
 	<licenses>
 		<license>
 			<name>GNU General Public License v3.0</name>
