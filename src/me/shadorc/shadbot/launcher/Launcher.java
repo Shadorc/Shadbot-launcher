@@ -37,9 +37,11 @@ public class Launcher {
 
 		jarPath = args[0];
 
+		LOG.info("--------------- INFO ---------------");
 		LOG.info(String.format("Available processors: %d cores", Runtime.getRuntime().availableProcessors()));
 		LOG.info(String.format("Total physical memory size: %.2f GB", Launcher.getTotalRam()));
 		LOG.info(String.format("Free physical memory size: %.2f GB", Launcher.getFreeRam()));
+		LOG.info("------------------------------------");
 
 		ScheduledExecutorService scheduledThreadPool = Executors.newSingleThreadScheduledExecutor();
 		scheduledThreadPool.scheduleAtFixedRate(Launcher::watchRam, 5, 5, TimeUnit.MINUTES);
@@ -64,7 +66,7 @@ public class Launcher {
 			return ExitCode.RESTART;
 		}
 
-		LOG.info("Starting...");
+		LOG.info("Starting process...");
 		final long start = System.currentTimeMillis();
 
 		try {
@@ -73,14 +75,14 @@ public class Launcher {
 			final String xmx = String.format("-Xmx%dm", allocatedRam);
 			process = new ProcessBuilder("java", "-jar", xmx, jarPath).inheritIO().start();
 
-			LOG.info(String.format("Process started (PID: %d) with: %s",
+			LOG.info(String.format("Process started (PID: %d): %s",
 					process.pid(), process.info().commandLine().orElse("")));
 
 			final int exitCode = process.waitFor();
 
 			final long elapsed = System.currentTimeMillis() - start;
-			LOG.info(String.format("Execution time: %s", 
-					new SimpleDateFormat("HH:mm:ss.SSS", Locale.FRENCH).format(new Date(elapsed))));
+			final SimpleDateFormat sdf = new SimpleDateFormat("HH 'hour(s)' mm 'minute(s)' ss 'second(s)'", Locale.FRENCH);
+			LOG.info(String.format("Execution time: %s", sdf.format(new Date(elapsed))));
 
 			return ExitCode.valueOf(exitCode);
 
@@ -92,7 +94,7 @@ public class Launcher {
 
 	private static void watchRam() {
 		if(Launcher.getFreeRam() < GB_RAM_MIN) {
-			LOG.warn("The available RAM is too low, restarting process...");
+			LOG.warn(String.format("The available RAM is too low (%d GB), restarting process...", Launcher.getFreeRam()));
 			process.destroy();
 			try {
 				if(!process.waitFor(10, TimeUnit.SECONDS)) {
