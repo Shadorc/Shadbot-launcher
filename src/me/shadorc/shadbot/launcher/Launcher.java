@@ -21,28 +21,39 @@ public class Launcher {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Launcher.class);
 	private static final OperatingSystemMXBean OS_BEAN =
 			(com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+	
 	private static final float GB = 1024 * 1024 * 1024;
-	private static final float GB_RAM_TO_START = 4.5f;
 	private static final AtomicBoolean SHOULD_RESTART = new AtomicBoolean();
 
 	private static String jarPath;
+	private static float gbMin;
+	private static int restartPeriod;
 	private static Process process;
 
 	public static void main(String[] args) {
-		if(args.length == 0 ) {
+		if(args.length == 1 && args[0].equals("-help")) {
+			System.out.println("Minimum GB required to start: -DgbMin (default: 4.5)"
+					+ "\nJar file to launch: -Dfile (default: auto-detect)"
+					+ "\nRestart period: -DrestartPeriod (default: never)");
+			System.exit(ExitCode.NORMAL.value());
+		}
+		
+		jarPath = System.getProperty("file");
+		gbMin = Float.parseFloat(System.getProperty("gbMin", "4.5"));
+		restartPeriod = Integer.parseInt(System.getProperty("restartPeriod", "-1"));
+		
+		if(jarPath == null) {
 			for(File file : new File(".").listFiles()) {
 				final String fileName = file.getName();
-				if(file.isFile() && fileName.startsWith("shadbot") && !fileName.contains("launcher")) {
+				if(file.isFile() && fileName.startsWith("shadbot") && fileName.endsWith(".jar") && !fileName.contains("launcher")) {
 					jarPath = fileName;
 					break;
 				}
 			}
-		} else {
-			jarPath = args[0];
 		}
 		
 		if(jarPath == null) {
-			LOGGER.error("jar not found. You can specify the path as an argument.");
+			LOGGER.error("File not found. You can specify the path as an argument using '-Dfile=${file}'.");
 			System.exit(ExitCode.FATAL_ERROR.value());
 		}
 
@@ -52,8 +63,11 @@ public class Launcher {
 		LOGGER.info(String.format("Free physical memory size: %.2f GB", Launcher.getFreeRam()));
 		LOGGER.info("----------------------------------------------");
 
-		final ScheduledExecutorService scheduledThreadPool = Executors.newSingleThreadScheduledExecutor();
-		scheduledThreadPool.scheduleAtFixedRate(Launcher::restart, 5, 5, TimeUnit.HOURS);
+		if(restartPeriod != -1) {
+			final ScheduledExecutorService scheduledThreadPool = Executors.newSingleThreadScheduledExecutor();
+			scheduledThreadPool.scheduleAtFixedRate(Launcher::restart, restartPeriod, restartPeriod, TimeUnit.HOURS);
+			System.out.println(String.format("Restart scheduled every %d hours.", restartPeriod));
+		}
 
 		ExitCode exitCode;
 		do {
@@ -68,9 +82,9 @@ public class Launcher {
 	}
 
 	private static ExitCode start() {
-		if(Launcher.getFreeRam() < GB_RAM_TO_START) {
+		if(Launcher.getFreeRam() < gbMin) {
 			LOGGER.error(String.format(
-					"Free physical memory insufficient to start the process (minimum required: %.1f GB)", GB_RAM_TO_START));
+					"Free physical memory insufficient to start the process (minimum required: %.1f GB)", gbMin));
 			return ExitCode.RESTART;
 		}
 
