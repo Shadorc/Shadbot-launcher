@@ -21,7 +21,7 @@ public class Launcher {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Launcher.class);
 	private static final OperatingSystemMXBean OS_BEAN =
 			(com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-	
+
 	private static final float GB = 1024 * 1024 * 1024;
 	private static final AtomicBoolean SHOULD_RESTART = new AtomicBoolean();
 
@@ -32,16 +32,16 @@ public class Launcher {
 
 	public static void main(String[] args) {
 		if(args.length == 1 && args[0].equals("-help")) {
-			System.out.println("Minimum GB required to start: -DgbMin (default: 4.5)"
+			LOGGER.info("Minimum GB required to start: -DgbMin (default: 4.5)"
 					+ "\nJar file to launch: -Dfile (default: auto-detect)"
 					+ "\nRestart period: -DrestartPeriod (default: never)");
 			System.exit(ExitCode.NORMAL.value());
 		}
-		
+
 		jarPath = System.getProperty("file");
 		gbMin = Float.parseFloat(System.getProperty("gbMin", "4.5"));
 		restartPeriod = Integer.parseInt(System.getProperty("restartPeriod", "-1"));
-		
+
 		if(jarPath == null) {
 			for(File file : new File(".").listFiles()) {
 				final String fileName = file.getName();
@@ -51,7 +51,7 @@ public class Launcher {
 				}
 			}
 		}
-		
+
 		if(jarPath == null) {
 			LOGGER.error("File not found. You can specify the path as an argument using '-Dfile=${file}'.");
 			System.exit(ExitCode.FATAL_ERROR.value());
@@ -66,7 +66,7 @@ public class Launcher {
 		if(restartPeriod != -1) {
 			final ScheduledExecutorService scheduledThreadPool = Executors.newSingleThreadScheduledExecutor();
 			scheduledThreadPool.scheduleAtFixedRate(Launcher::restart, restartPeriod, restartPeriod, TimeUnit.HOURS);
-			System.out.println(String.format("Restart scheduled every %d hours.", restartPeriod));
+			LOGGER.info("Restart scheduled every {} hours.", restartPeriod);
 		}
 
 		ExitCode exitCode;
