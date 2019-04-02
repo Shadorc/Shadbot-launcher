@@ -73,6 +73,16 @@ public class Launcher {
 		do {
 			exitCode = Launcher.start();
 			LOGGER.info("Exit code: {}", exitCode.toString());
+			if(exitCode.equals(ExitCode.RESTART_CLEAN)) {
+				Launcher.LOGGER.info("Deleting logs...");
+				try {
+					Files.walk(new File("./logs").toPath())
+							.sorted(Comparator.reverseOrder())
+							.map(Path::toFile)
+							.forEach(File::delete);
+				} catch (final IOException err) {
+					Launcher.LOGGER.error("An error occurred while deleting logs: {}", err.getMessage(), err);
+				}
 			try {
 				Thread.sleep(5000);
 			} catch (InterruptedException err) {
