@@ -14,11 +14,11 @@ public enum ExitCode {
 	}
 
 	public int value() {
-		return value;
+		return this.value;
 	}
 
 	public static ExitCode valueOf(int value) {
-		for(ExitCode exitCode : ExitCode.values()) {
+		for(final ExitCode exitCode : ExitCode.values()) {
 			if(exitCode.value == value) {
 				return exitCode;
 			}
