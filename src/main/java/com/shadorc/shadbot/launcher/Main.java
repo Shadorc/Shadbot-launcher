@@ -9,7 +9,7 @@ public class Main {
             Utils.LOGGER.info("Minimum GB required to start: -DgbMin (default: 4.5)"
                     + "\nJar file to launch: -Dfile (default: auto-detect)"
                     + "\nRestart period: -DrestartPeriod (default: never)");
-            System.exit(ExitCode.NORMAL.value());
+            System.exit(ExitCode.NORMAL.getValue());
         }
 
         final String jarPath = Main.getJarPath();
@@ -18,7 +18,7 @@ public class Main {
 
         if (jarPath == null) {
             Utils.LOGGER.error("File not found. You can specify the path as an argument using '-Dfile=${file}'.");
-            System.exit(ExitCode.FATAL_ERROR.value());
+            System.exit(ExitCode.FATAL_ERROR.getValue());
         }
 
         final Launcher launcher = new Launcher(jarPath, gbMin, restartPeriod);
