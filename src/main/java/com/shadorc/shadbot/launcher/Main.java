@@ -26,19 +26,19 @@ public class Main {
     }
 
     private static String getJarPath() {
-        String jarPath = System.getProperty("file");
+        final String jarPath = System.getProperty("file");
+        if (jarPath != null) {
+            return jarPath;
+        }
 
-        if (jarPath == null) {
-            for (final File file : new File(".").listFiles()) {
-                final String fileName = file.getName();
-                if (file.isFile() && fileName.startsWith("shadbot") && fileName.endsWith(".jar") && !fileName.contains("launcher")) {
-                    jarPath = fileName;
-                    break;
-                }
+        for (final File file : new File(".").listFiles()) {
+            final String fileName = file.getName();
+            if (file.isFile() && fileName.startsWith("shadbot") && fileName.endsWith(".jar") && !fileName.contains("launcher")) {
+                return fileName;
             }
         }
 
-        return jarPath;
+        return null;
     }
 
 }
