@@ -16,6 +16,7 @@ dependency-reduced-pom.xml
 
 # IntelliJ project files
 .idea
+shadbot-launcher.iml
 
 # PDM files
 .eclipse-pmd
