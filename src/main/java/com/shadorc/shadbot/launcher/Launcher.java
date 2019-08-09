@@ -1,4 +1,4 @@
-package me.shadorc.shadbot.launcher;
+package com.shadorc.shadbot.launcher;
 
 import java.io.File;
 import java.io.IOException;
