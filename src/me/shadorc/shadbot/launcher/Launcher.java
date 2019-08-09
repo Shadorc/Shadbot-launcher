@@ -13,112 +13,122 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class Launcher {
 
-	private final String jarPath;
-	private final float gbMin;
-	private final int restartPeriod;
-	private final AtomicBoolean shouldRestart;
+    private final String jarPath;
+    private final float gbMin;
+    private final int restartPeriod;
+    private final AtomicBoolean shouldRestart;
 
-	private Process process;
+    private Process process;
 
-	public Launcher(String jarPath, float gbMin, int restartPeriod) {
-		this.jarPath = jarPath;
-		this.gbMin = gbMin;
-		this.restartPeriod = restartPeriod;
-		this.shouldRestart = new AtomicBoolean();
-	}
+    public Launcher(String jarPath, float gbMin, int restartPeriod) {
+        this.jarPath = jarPath;
+        this.gbMin = gbMin;
+        this.restartPeriod = restartPeriod;
+        this.shouldRestart = new AtomicBoolean();
+    }
 
-	public void start() {
-		Utils.LOGGER.info("------------------------------ INFO ------------------------------");
-		Utils.LOGGER.info(String.format("Available processors: %d cores", Runtime.getRuntime().availableProcessors()));
-		Utils.LOGGER.info(String.format("Total physical memory size: %.2f GB", Utils.getTotalRam()));
-		Utils.LOGGER.info(String.format("Free physical memory size: %.2f GB", Utils.getFreeRam()));
-		Utils.LOGGER.info("------------------------------------------------------------------");
+    public void start() {
+        Utils.LOGGER.info("------------------------------ INFO ------------------------------");
+        Utils.LOGGER.info(String.format("Available processors: %d cores", Runtime.getRuntime().availableProcessors()));
+        Utils.LOGGER.info(String.format("Total physical memory size: %.2f GB", Utils.getTotalRam()));
+        Utils.LOGGER.info(String.format("Free physical memory size: %.2f GB", Utils.getFreeRam()));
+        Utils.LOGGER.info("------------------------------------------------------------------");
 
-		if(this.restartPeriod != -1) {
-			final ScheduledExecutorService scheduledThreadPool = Executors.newSingleThreadScheduledExecutor();
-			scheduledThreadPool.scheduleAtFixedRate(this::restart, this.restartPeriod, this.restartPeriod, TimeUnit.HOURS);
-			Utils.LOGGER.info("Restart scheduled every {} hours.", this.restartPeriod);
-		}
+        if (this.restartPeriod != -1) {
+            final ScheduledExecutorService scheduledThreadPool = Executors.newSingleThreadScheduledExecutor();
+            scheduledThreadPool.scheduleAtFixedRate(this::restart, this.restartPeriod, this.restartPeriod, TimeUnit.HOURS);
+            Utils.LOGGER.info("Restart scheduled every {} hours.", this.restartPeriod);
+        }
 
-		ExitCode exitCode;
-		do {
-			exitCode = this.startAndWait();
-			Utils.LOGGER.info("Exit code: {}", exitCode.toString());
-			if(exitCode.equals(ExitCode.RESTART_CLEAN)) {
-				this.deleteLogs();
-			}
+        ExitCode exitCode;
+        do {
+            exitCode = this.startAndWait();
+            Utils.LOGGER.info("Exit code: {}", exitCode);
+            if (exitCode == ExitCode.RESTART_CLEAN) {
+                if (this.deleteLogs()) {
+                    Utils.LOGGER.info("Logs deleted.");
+                } else {
+                    Utils.LOGGER.warn("Logs could not be completly deleted.");
+                }
+            }
 
-			try {
-				Thread.sleep(5000);
-			} catch (final InterruptedException err) {
-				Utils.LOGGER.error("An error occurred while waiting.", err);
-			}
-		} while(!exitCode.equals(ExitCode.NORMAL) || this.shouldRestart.getAndSet(false));
-	}
+            try {
+                Thread.sleep(5000);
+            } catch (final InterruptedException err) {
+                Utils.LOGGER.error("An error occurred while waiting.", err);
+            }
+        } while (exitCode != ExitCode.NORMAL || this.shouldRestart.getAndSet(false));
+    }
 
-	private ExitCode startAndWait() {
-		if(Utils.getFreeRam() < this.gbMin) {
-			Utils.LOGGER.error(String.format(
-					"Free physical memory insufficient to start the process (minimum required: %.1f GB)", this.gbMin));
-			return ExitCode.RESTART;
-		}
+    private ExitCode startAndWait() {
+        if (Utils.getFreeRam() < this.gbMin) {
+            Utils.LOGGER.error(String.format(
+                    "Free physical memory insufficient to start the process (minimum required: %.1f GB)", this.gbMin));
+            return ExitCode.RESTART;
+        }
 
-		Utils.LOGGER.info("Starting process...");
+        Utils.LOGGER.info("Starting process...");
 
-		try {
-			// Allocate as much memory as possible leaving 500 MB free
-			final int allocatedRam = (int) (Math.ceil(Utils.getFreeRam() - 0.5f) * 1000d);
-			final String xmx = String.format("-Xmx%dm", allocatedRam);
-			this.process = new ProcessBuilder("java", "-jar", xmx, this.jarPath).inheritIO().start();
+        try {
+            // Allocate as much memory as possible leaving 500 MB free
+            final int allocatedRam = (int) (Math.ceil(Utils.getFreeRam() - 0.5f) * 1000.0);
+            final String xmx = String.format("-Xmx%dm", allocatedRam);
+            this.process = new ProcessBuilder("java", "-jar", xmx, this.jarPath).inheritIO().start();
 
-			Utils.LOGGER.info(String.format("Process started (PID: %d): %s",
-					this.process.pid(), this.process.info().commandLine().orElse("")));
+            Utils.LOGGER.info(String.format("Process started (PID: %d): %s",
+                    this.process.pid(), this.process.info().commandLine().orElse("")));
 
-			final int exitCode = this.process.waitFor();
+            final int exitCode = this.process.waitFor();
 
-			final Duration duration = this.process.info().totalCpuDuration().orElse(Duration.ZERO);
-			final SimpleDateFormat sdf = new SimpleDateFormat("HH 'hour(s)' mm 'minute(s)' ss 'second(s)'", Locale.FRENCH);
-			Utils.LOGGER.info("Execution time: {}", sdf.format(new Date(duration)));
+            final Duration duration = this.process.info().totalCpuDuration().orElse(Duration.ZERO);
+            final SimpleDateFormat sdf = new SimpleDateFormat("HH 'hour(s)' mm 'minute(s)' ss 'second(s)'", Locale.FRENCH);
+            Utils.LOGGER.info("Execution time: {}", sdf.format(new Date(duration.toMillis())));
 
-			return ExitCode.valueOf(exitCode);
+            return ExitCode.valueOf(exitCode);
 
-		} catch (IOException | InterruptedException err) {
-			Utils.LOGGER.error("An error occurred while starting the process.", err);
-			return ExitCode.FATAL_ERROR;
-		}
-	}
+        } catch (final IOException | InterruptedException err) {
+            Utils.LOGGER.error("An error occurred while starting the process.", err);
+            return ExitCode.FATAL_ERROR;
+        }
+    }
 
-	private void restart() {
-		Utils.LOGGER.info("Restarting process...");
-		this.shouldRestart.set(true);
-		this.process.destroy();
-		try {
-			if(!this.process.waitFor(10, TimeUnit.SECONDS)) {
-				Utils.LOGGER.warn("The process has not been cleanly destroyed, killing the process forcibly...");
-				this.process.destroyForcibly();
-			}
-		} catch (final InterruptedException err) {
-			Utils.LOGGER.error("An error occurred while waiting for the process to finish.", err);
-		}
-	}
+    private void restart() {
+        Utils.LOGGER.info("Restarting process...");
+        this.shouldRestart.set(true);
+        this.process.destroy();
+        try {
+            if (!this.process.waitFor(10, TimeUnit.SECONDS)) {
+                Utils.LOGGER.warn("The process has not been cleanly destroyed, killing the process forcibly...");
+                this.process.destroyForcibly();
+            }
+        } catch (final InterruptedException err) {
+            Utils.LOGGER.error("An error occurred while waiting for the process to finish.", err);
+        }
+    }
 
-	private void deleteLogs() {
-		Utils.LOGGER.info("Deleting logs...");
-		try {
-			final File file = new File("./logs");
-			if(file.exists()) {
-				Files.walk(new File("./logs").toPath())
-						.sorted(Comparator.reverseOrder())
-						.map(Path::toFile)
-						.forEach(File::delete);
-			}
-			Utils.LOGGER.info("Logs deleted.");
-		} catch (final IOException err) {
-			Utils.LOGGER.error("An error occurred while deleting logs: {}", err.getMessage(), err);
-		}
-	}
+    private boolean deleteLogs() {
+        Utils.LOGGER.info("Deleting logs...");
+        final File file = new File("./logs");
+        if (!file.exists()) {
+            Utils.LOGGER.info("There are no logs to delete.");
+            return true;
+        }
+
+        try (final Stream<Path> stream = Files.walk(new File("./logs").toPath())) {
+            return stream.sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .map(File::delete)
+                    .allMatch(Predicate.isEqual(Boolean.TRUE));
+        } catch (final IOException err) {
+            Utils.LOGGER.error("An error occurred while deleting logs: {}", err.getMessage(), err);
+        }
+
+        return false;
+    }
 
 }

@@ -5,7 +5,7 @@ import java.io.File;
 public class Main {
 
     public static void main(String[] args) {
-        if (args.length == 1 && args[0].equals("-help")) {
+        if (args.length == 1 && "-help".equals(args[0])) {
             Utils.LOGGER.info("Minimum GB required to start: -DgbMin (default: 4.5)"
                     + "\nJar file to launch: -Dfile (default: auto-detect)"
                     + "\nRestart period: -DrestartPeriod (default: never)");
