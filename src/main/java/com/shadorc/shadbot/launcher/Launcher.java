@@ -58,7 +58,7 @@ public class Launcher {
             }
 
             try {
-                Thread.sleep(5000);
+                Thread.sleep(10_000);
             } catch (final InterruptedException err) {
                 Utils.LOGGER.error("An error occurred while waiting.", err);
             }
