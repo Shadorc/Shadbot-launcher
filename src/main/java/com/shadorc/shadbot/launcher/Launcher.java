@@ -1,20 +1,14 @@
 package com.shadorc.shadbot.launcher;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 public class Launcher {
 
@@ -49,20 +43,13 @@ public class Launcher {
         do {
             exitCode = this.startAndWait();
             Utils.LOGGER.info("Exit code: {}", exitCode);
-            if (exitCode == ExitCode.RESTART_CLEAN || exitCode == ExitCode.NORMAL_CLEAN) {
-                if (this.deleteLogs()) {
-                    Utils.LOGGER.info("Logs deleted.");
-                } else {
-                    Utils.LOGGER.warn("Logs could not be completly deleted.");
-                }
-            }
 
             try {
                 Thread.sleep(10_000);
             } catch (final InterruptedException err) {
                 Utils.LOGGER.error("An error occurred while waiting.", err);
             }
-        } while (exitCode != ExitCode.NORMAL && exitCode != ExitCode.NORMAL_CLEAN || this.shouldRestart.getAndSet(false));
+        } while (exitCode != ExitCode.NORMAL || this.shouldRestart.getAndSet(false));
     }
 
     private ExitCode startAndWait() {
@@ -109,26 +96,6 @@ public class Launcher {
         } catch (final InterruptedException err) {
             Utils.LOGGER.error("An error occurred while waiting for the process to finish.", err);
         }
-    }
-
-    private boolean deleteLogs() {
-        Utils.LOGGER.info("Deleting logs...");
-        final File file = new File("./logs");
-        if (!file.exists()) {
-            Utils.LOGGER.info("There are no logs to delete.");
-            return true;
-        }
-
-        try (final Stream<Path> stream = Files.walk(new File("./logs").toPath())) {
-            return stream.sorted(Comparator.reverseOrder())
-                    .map(Path::toFile)
-                    .map(File::delete)
-                    .allMatch(Predicate.isEqual(Boolean.TRUE));
-        } catch (final IOException err) {
-            Utils.LOGGER.error("An error occurred while deleting logs: {}", err.getMessage(), err);
-        }
-
-        return false;
     }
 
 }
