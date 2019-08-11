@@ -3,9 +3,10 @@ package com.shadorc.shadbot.launcher;
 public enum ExitCode {
     UNKNWON(-1),
     NORMAL(0),
-    FATAL_ERROR(1),
+    NORMAL_CLEAN(1),
     RESTART(2),
-    RESTART_CLEAN(3);
+    RESTART_CLEAN(3),
+    FATAL_ERROR(4);
 
     private final int value;
 

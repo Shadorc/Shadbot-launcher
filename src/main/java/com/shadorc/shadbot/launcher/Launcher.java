@@ -49,7 +49,7 @@ public class Launcher {
         do {
             exitCode = this.startAndWait();
             Utils.LOGGER.info("Exit code: {}", exitCode);
-            if (exitCode == ExitCode.RESTART_CLEAN) {
+            if (exitCode == ExitCode.RESTART_CLEAN || exitCode == ExitCode.NORMAL_CLEAN) {
                 if (this.deleteLogs()) {
                     Utils.LOGGER.info("Logs deleted.");
                 } else {
@@ -62,7 +62,7 @@ public class Launcher {
             } catch (final InterruptedException err) {
                 Utils.LOGGER.error("An error occurred while waiting.", err);
             }
-        } while (exitCode != ExitCode.NORMAL || this.shouldRestart.getAndSet(false));
+        } while (exitCode != ExitCode.NORMAL && exitCode != ExitCode.NORMAL_CLEAN || this.shouldRestart.getAndSet(false));
     }
 
     private ExitCode startAndWait() {
