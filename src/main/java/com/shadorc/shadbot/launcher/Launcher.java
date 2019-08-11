@@ -1,10 +1,7 @@
 package com.shadorc.shadbot.launcher;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
-import java.util.Date;
-import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -73,8 +70,8 @@ public class Launcher {
             final int exitCode = this.process.waitFor();
 
             final Duration duration = this.process.info().totalCpuDuration().orElse(Duration.ZERO);
-            final SimpleDateFormat sdf = new SimpleDateFormat("HH 'hour(s)' mm 'minute(s)' ss 'second(s)'", Locale.FRENCH);
-            Utils.LOGGER.info("Execution time: {}", sdf.format(new Date(duration.toMillis())));
+            Utils.LOGGER.info("Execution time: {} hour(s) {} minute(s) {} second(s)",
+                    duration.toHoursPart(), duration.toMinutesPart(), duration.toSecondsPart());
 
             return ExitCode.valueOf(exitCode);
 
