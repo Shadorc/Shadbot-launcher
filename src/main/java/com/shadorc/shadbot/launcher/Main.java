@@ -1,14 +1,31 @@
 package com.shadorc.shadbot.launcher;
 
 import java.io.File;
+import java.io.IOException;
 
 public class Main {
 
     public static void main(String[] args) {
-        if (args.length == 1 && "-help".equals(args[0])) {
-            Utils.LOGGER.info("Minimum GB required to start: -DgbMin (default: 4.5)"
-                    + "\nJar file to launch: -Dfile (default: auto-detect)"
-                    + "\nRestart period: -DrestartPeriod (default: never)");
+        if (args.length == 1) {
+            if ("-help".equals(args[0])) {
+                Utils.LOGGER.info("Minimum GB required to start: -DgbMin (default: 4.5)"
+                        + "\nJar file to launch: -Dfile (default: auto-detect)"
+                        + "\nRestart period: -DrestartPeriod (default: never)");
+            } else if ("-exportDb".equals(args[0])) {
+                try {
+                    DBUtils.exportDb();
+                } catch (final IOException | InterruptedException err) {
+                    Utils.LOGGER.error("An error occurred while exporting database.", err);
+                }
+            } else if ("-importDb".equals(args[0])) {
+                try {
+                    DBUtils.importDb();
+                } catch (final IOException | InterruptedException err) {
+                    Utils.LOGGER.error("An error occurred while importing database.", err);
+                }
+            } else {
+                Utils.LOGGER.error("Unknown arguments. Options: -help / -importDb / -exportDb");
+            }
             System.exit(ExitCode.NORMAL.getValue());
         }
 

@@ -10,7 +10,8 @@ public class Utils {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("shadbot-launcher");
 
-    private static final OperatingSystemMXBean OS_BEAN = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+    private static final OperatingSystemMXBean OS_BEAN =
+            (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
     private static final float GB = 1024 * 1024 * 1024;
 
     public static float getFreeRam() {
