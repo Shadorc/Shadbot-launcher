@@ -68,11 +68,6 @@ public class Launcher {
                     this.process.pid(), this.process.info().commandLine().orElse("")));
 
             final int exitCode = this.process.waitFor();
-
-            final Duration duration = this.process.info().totalCpuDuration().orElse(Duration.ZERO);
-            Utils.LOGGER.info("Execution time: {} hour(s) {} minute(s) {} second(s)",
-                    duration.toHoursPart(), duration.toMinutesPart(), duration.toSecondsPart());
-
             return ExitCode.valueOf(exitCode);
 
         } catch (final IOException | InterruptedException err) {
