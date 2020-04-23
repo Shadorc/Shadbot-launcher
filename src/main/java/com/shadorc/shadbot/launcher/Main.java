@@ -11,9 +11,9 @@ public class Main {
     public static void main(String[] args) {
         if (args.length == 1) {
             if ("-help".equals(args[0])) {
-                Utils.LOGGER.info("Minimum GB required to start: -DgbMin (default: 4.5)"
+                Utils.LOGGER.info("Minimum GB required to start: -DgbMin (default: {})"
                         + "\nJar file to launch: -Dfile (default: auto-detect)"
-                        + "\nRestart period: -DrestartPeriod (default: never)");
+                        + "\nRestart period: -DrestartPeriod (default: never)", DEFAULT_GB_MIN);
             } else if ("-exportDb".equals(args[0])) {
                 try {
                     DBUtils.exportDb();
