@@ -15,7 +15,7 @@ public class DBUtils {
             Utils.LOGGER.info("Exporting {} collection (PID: {}): {}",
                     collection, process.pid(), process.info().commandLine().orElse(""));
 
-            final int exitCode = process.waitFor();
+            process.waitFor();
         }
         Utils.LOGGER.info("Database {} exported.", DB_NAME);
     }
@@ -28,7 +28,7 @@ public class DBUtils {
             Utils.LOGGER.info("Importing {} collection (PID: {}): {}",
                     collection, process.pid(), process.info().commandLine().orElse(""));
 
-            final int exitCode = process.waitFor();
+            process.waitFor();
         }
         Utils.LOGGER.info("Database {} imported.", DB_NAME);
     }
