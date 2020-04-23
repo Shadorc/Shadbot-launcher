@@ -52,7 +52,7 @@ public class Launcher {
         if (Utils.getFreeRam() < this.gbMin) {
             Utils.LOGGER.error(String.format(
                     "Free physical memory insufficient to start the process (minimum required: %.1f GB)", this.gbMin));
-            return ExitCode.RESTART;
+            return ExitCode.FATAL_ERROR;
         }
 
         Utils.LOGGER.info("Starting process...");
