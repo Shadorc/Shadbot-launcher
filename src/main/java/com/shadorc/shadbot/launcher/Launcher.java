@@ -80,7 +80,7 @@ public class Launcher {
         this.shouldRestart.set(true);
         this.process.destroy();
         try {
-            if (!this.process.waitFor(10, TimeUnit.SECONDS)) {
+            if (!this.process.waitFor(2_500, TimeUnit.MILLISECONDS)) {
                 Utils.LOGGER.warn("The process has not been cleanly destroyed, killing the process forcibly...");
                 this.process.destroyForcibly();
             }
