@@ -59,7 +59,7 @@ public class Launcher {
 
         try {
             // Allocate as much memory as possible leaving 500 MB free
-            final int allocatedRam = (int) (Math.ceil(Utils.getFreeRam() - 0.5f) * 1000.0);
+            final int allocatedRam = (int) (Utils.getFreeRam() * 1000.0f - 500.0f);
             final String xmx = String.format("-Xmx%dm", allocatedRam);
             this.process = new ProcessBuilder("java", "-jar", xmx, this.jarPath).inheritIO().start();
 
