@@ -1,8 +1,5 @@
 package com.shadorc.shadbot.launcher;
 
-import java.io.File;
-import java.io.IOException;
-
 public class Main {
 
     public static final float DEFAULT_GB_MIN = 3f;
@@ -10,24 +7,15 @@ public class Main {
 
     public static void main(String[] args) {
         if (args.length == 1) {
-            if ("-help".equals(args[0])) {
-                Utils.LOGGER.info("Minimum GB required to start: -DgbMin (default: {})"
-                        + "\nJar file to launch: -Dfile (default: auto-detect)"
-                        + "\nRestart period: -DrestartPeriod (default: never)", DEFAULT_GB_MIN);
-            } else if ("-exportDb".equals(args[0])) {
-                try {
-                    DBUtils.exportDb();
-                } catch (final IOException | InterruptedException err) {
-                    Utils.LOGGER.error("An error occurred while exporting database.", err);
-                }
-            } else if ("-importDb".equals(args[0])) {
-                try {
-                    DBUtils.importDb();
-                } catch (final IOException | InterruptedException err) {
-                    Utils.LOGGER.error("An error occurred while importing database.", err);
-                }
-            } else {
-                Utils.LOGGER.error("Unknown arguments. Options: -help / -importDb / -exportDb");
+            switch (args[0]) {
+                case "-help":
+                    Utils.LOGGER.info("Minimum GB required to start: -DgbMin (default: {})"
+                            + "\nJar file to launch: -Dfile (default: auto-detect)"
+                            + "\nRestart period: -DrestartPeriod (default: never)", DEFAULT_GB_MIN);
+                    break;
+                default:
+                    Utils.LOGGER.error("Unknown arguments. Options: -help");
+                    break;
             }
             System.exit(ExitCode.NORMAL.getValue());
         }
