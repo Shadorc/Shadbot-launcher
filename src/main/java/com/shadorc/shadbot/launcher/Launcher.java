@@ -45,7 +45,7 @@ public class Launcher {
             } catch (final InterruptedException err) {
                 Utils.LOGGER.error("An error occurred while waiting.", err);
             }
-        } while (exitCode != ExitCode.NORMAL || this.shouldRestart.getAndSet(false));
+        } while (exitCode == ExitCode.RESTART || this.shouldRestart.getAndSet(false));
     }
 
     private ExitCode startAndWait() {
