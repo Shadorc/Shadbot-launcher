@@ -29,7 +29,7 @@ public class Launcher {
         Utils.LOGGER.info(String.format("Free physical memory size: %.2f GB", Utils.getFreeRam()));
         Utils.LOGGER.info("------------------------------------------------------------------");
 
-        if (this.restartPeriod != -1) {
+        if (this.restartPeriod > 0) {
             final ScheduledExecutorService scheduledThreadPool = Executors.newSingleThreadScheduledExecutor();
             scheduledThreadPool.scheduleAtFixedRate(this::restart, this.restartPeriod, this.restartPeriod, TimeUnit.HOURS);
             Utils.LOGGER.info("Restart scheduled every {} hours.", this.restartPeriod);
