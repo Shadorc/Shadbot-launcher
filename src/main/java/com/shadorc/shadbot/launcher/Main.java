@@ -20,7 +20,7 @@ public class Main {
             System.exit(ExitCode.NORMAL.getValue());
         }
 
-        final String jarPath = Main.getJarPath();
+        final String jarPath = Utils.getJarPath();
         final float gbMin = Float.parseFloat(System.getProperty("gbMin", Float.toString(DEFAULT_GB_MIN)));
         final int restartPeriod = Integer.parseInt(System.getProperty("restartPeriod", Integer.toString(DEFAULT_RESTART_PERIOD)));
 
@@ -31,22 +31,6 @@ public class Main {
 
         final Launcher launcher = new Launcher(jarPath, gbMin, restartPeriod);
         launcher.start();
-    }
-
-    private static String getJarPath() {
-        final String jarPath = System.getProperty("file");
-        if (jarPath != null) {
-            return jarPath;
-        }
-
-        for (final File file : new File(".").listFiles()) {
-            final String fileName = file.getName();
-            if (file.isFile() && fileName.startsWith("shadbot") && fileName.endsWith(".jar") && !fileName.contains("launcher")) {
-                return fileName;
-            }
-        }
-
-        return null;
     }
 
 }
