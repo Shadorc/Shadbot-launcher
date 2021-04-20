@@ -7,15 +7,13 @@ public class Main {
 
     public static void main(String[] args) {
         if (args.length == 1) {
-            switch (args[0]) {
-                case "-help":
-                    Utils.LOGGER.info("Minimum GB required to start: -DgbMin (default: {})"
-                            + "\nJar file to launch: -Dfile (default: auto-detect)"
-                            + "\nRestart period: -DrestartPeriod (default: never)", DEFAULT_GB_MIN);
-                    break;
-                default:
-                    Utils.LOGGER.error("Unknown arguments. Options: -help");
-                    break;
+            if ("-help".equals(args[0])) {
+                Utils.LOGGER.info("""
+                        Minimum GB required to start: -DgbMin (default: {})
+                        Jar file to launch: -Dfile (default: auto-detect)
+                        Restart period: -DrestartPeriod (default: never)""", DEFAULT_GB_MIN);
+            } else {
+                Utils.LOGGER.error("Unknown arguments. Options: -help");
             }
             System.exit(ExitCode.NORMAL.getValue());
         }

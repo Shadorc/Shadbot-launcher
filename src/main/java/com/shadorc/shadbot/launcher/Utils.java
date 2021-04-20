@@ -6,6 +6,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.regex.Pattern;
 
 public class Utils {
 
@@ -16,11 +21,11 @@ public class Utils {
     private static final float GB = 1024 * 1024 * 1024;
 
     public static float getFreeRam() {
-        return OS_BEAN.getFreePhysicalMemorySize() / GB;
+        return OS_BEAN.getFreeMemorySize() / GB;
     }
 
     public static float getTotalRam() {
-        return OS_BEAN.getTotalPhysicalMemorySize() / GB;
+        return OS_BEAN.getTotalMemorySize() / GB;
     }
 
     static String getJarPath() {
@@ -29,14 +34,23 @@ public class Utils {
             return jarPath;
         }
 
-        for (final File file : new File(".").listFiles()) {
+        final List<String> filenames = new ArrayList<>(1);
+
+        final Pattern pattern = Pattern.compile("shadbot-[0-9]+.[0-9]+.[0-9]+.jar");
+        for (final File file : Objects.requireNonNull(new File(".").listFiles())) {
             final String fileName = file.getName();
-            if (file.isFile() && fileName.startsWith("shadbot") && fileName.endsWith(".jar") && !fileName.contains("launcher")) {
-                return fileName;
+            if (file.isFile() && pattern.matcher(fileName).matches()) {
+                filenames.add(fileName);
             }
         }
 
-        return null;
+        if (filenames.isEmpty()) {
+            return null;
+        }
+
+        Collections.sort(filenames);
+        Collections.reverse(filenames);
+        return filenames.get(0);
     }
 
 }
